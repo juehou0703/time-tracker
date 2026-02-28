@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?  // hex
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activities Activity[]
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  name       String
+  categoryId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  entries  TimeEntry[]
+
+  @@unique([name, categoryId])
+}
+
+model TimeEntry {
+  id         String   @id @default(cuid())
+  startAt    DateTime
+  endAt      DateTime
+  note       String?
+  source     String   @default("web")
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Restrict)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([startAt])
+  @@index([endAt])
+  @@index([activityId])
+}
