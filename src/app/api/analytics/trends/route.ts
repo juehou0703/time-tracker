@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireApiKey } from '@/lib/auth'
-
-function toISODate(d: Date) {
-  return d.toISOString().slice(0, 10)
-}
+import { DEFAULT_TZ, isoDateInTimeZone, startOfDayInTimeZone } from '@/lib/time'
 
 export async function GET(req: NextRequest) {
   const auth = requireApiKey(req)
@@ -12,8 +9,9 @@ export async function GET(req: NextRequest) {
 
   const days = Math.min(365, Math.max(7, Number(req.nextUrl.searchParams.get('days') || 30)))
   const end = new Date()
-  const start = new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000)
-  start.setHours(0, 0, 0, 0)
+
+  // Build a PST/PDT-aligned window.
+  const start = startOfDayInTimeZone(new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000), DEFAULT_TZ)
 
   const entries = await prisma.timeEntry.findMany({
     where: { endAt: { gte: start }, startAt: { lte: end } },
@@ -26,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   for (let i = 0; i < days; i++) {
     const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000)
-    byDay[toISODate(d)] = {}
+    byDay[isoDateInTimeZone(d, DEFAULT_TZ)] = {}
   }
 
   for (const e of entries) {
@@ -34,7 +32,7 @@ export async function GET(req: NextRequest) {
     categories.add(cat)
 
     // attribute entry to the day of its start (v0 simplification)
-    const day = toISODate(new Date(e.startAt))
+    const day = isoDateInTimeZone(new Date(e.startAt), DEFAULT_TZ)
     if (!byDay[day]) continue
     const ms = Math.max(0, new Date(e.endAt).getTime() - new Date(e.startAt).getTime())
     byDay[day][cat] = (byDay[day][cat] || 0) + ms

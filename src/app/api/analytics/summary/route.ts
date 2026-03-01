@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireApiKey } from '@/lib/auth'
-import { startOfPeriod } from '@/lib/time'
+import { DEFAULT_TZ, startOfPeriodInTimeZone } from '@/lib/time'
 
 export async function GET(req: NextRequest) {
   const auth = requireApiKey(req)
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   const period = (req.nextUrl.searchParams.get('period') || 'week') as 'day' | 'week' | 'month' | 'quarter'
   const now = new Date()
-  const start = startOfPeriod(now, period)
+  const start = startOfPeriodInTimeZone(now, period, DEFAULT_TZ)
 
   const entries = await prisma.timeEntry.findMany({
     where: { endAt: { gte: start }, startAt: { lte: now } },
