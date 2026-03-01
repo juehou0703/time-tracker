@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PieCard } from '@/components/PieCard'
 import { TrendCard } from '@/components/TrendCard'
+import { FeedbackBox } from '@/components/FeedbackBox'
 import { Card, CardBody, CardHeader, Select } from '@/components/ui'
 
 type Summary = {
@@ -124,6 +125,8 @@ export default function DashboardPage() {
       <div className="text-xs text-white/45">
         Note: v0 assumes entries don’t overlap and attributes trends to the start day.
       </div>
+
+      <FeedbackBox page="dashboard" />
     </div>
   )
 }

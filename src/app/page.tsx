@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FeedbackBox } from '@/components/FeedbackBox'
 
 export default function Home() {
   return (
@@ -69,6 +70,8 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      <FeedbackBox page="home" />
     </div>
   )
 }

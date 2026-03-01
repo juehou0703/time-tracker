@@ -8,6 +8,7 @@ export type QuickActivity = {
   label: string
   categoryName: string
   activityName: string
+  icon?: string // emoji or short label
   accent?: string // css color
   defaultMinutes: number
 }
@@ -31,6 +32,8 @@ function lsKey(id: string) {
   return `tt:lastDuration:${id}`
 }
 
+const OTHER_NAME_KEY = 'tt:otherActivityName'
+
 export function QuickLog({ activities }: { activities: QuickActivity[] }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [minutes, setMinutes] = useState(25)
@@ -38,6 +41,12 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [lastCreatedId, setLastCreatedId] = useState<string | null>(null)
+  const [otherName, setOtherName] = useState('Other')
+
+  useEffect(() => {
+    const fromLs = typeof window !== 'undefined' ? window.localStorage.getItem(OTHER_NAME_KEY) : null
+    if (fromLs && fromLs.trim()) setOtherName(fromLs.trim())
+  }, [])
 
   const active = useMemo(() => activities.find((a) => a.id === openId) || null, [activities, openId])
 
@@ -57,6 +66,10 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
 
   const log = async () => {
     if (!active) return
+    if (active.id === 'other' && !otherName.trim()) {
+      setToast('Pick a name for the activity.')
+      return
+    }
     setBusy(true)
     setToast(null)
     try {
@@ -68,7 +81,7 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
         headers: { 'content-type': 'application/json', 'x-api-key': 'hello' },
         body: JSON.stringify({
           categoryName: active.categoryName,
-          activityName: active.activityName,
+          activityName: active.id === 'other' ? otherName : active.activityName,
           startAt: start.toISOString(),
           endAt: end.toISOString(),
           note: note.trim() ? note.trim() : null,
@@ -80,7 +93,8 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
 
       setLastCreatedId(json?.entry?.id || null)
       window.localStorage.setItem(lsKey(active.id), String(minutes))
-      setToast(`Logged ${active.label} — ${fmt(minutes)}`)
+      setToast(`Logged ${active.id === 'other' ? otherName : active.label} — ${fmt(minutes)}`)
+      if (active.id === 'other') window.localStorage.setItem(OTHER_NAME_KEY, otherName)
       setOpenId(null)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed'
@@ -113,31 +127,40 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {activities.map((a) => (
-          <button
-            key={a.id}
-            onClick={() => setOpenId(a.id)}
-            className="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/5 px-4 py-4 text-left transition hover:bg-white/8 active:scale-[0.99]"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold tracking-tight">{a.label}</div>
-                <div className="mt-1 text-xs text-white/55">{a.categoryName}</div>
+        {activities.map((a) => {
+          const label = a.id === 'other' ? otherName : a.label
+          return (
+            <button
+              key={a.id}
+              onClick={() => setOpenId(a.id)}
+              className="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/5 px-4 py-4 text-left transition hover:bg-white/8 active:scale-[0.99]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold tracking-tight">{label}</div>
+                  <div className="mt-1 text-xs text-white/55">{a.categoryName}</div>
+                </div>
+                <div
+                  className="h-9 w-9 rounded-2xl ring-1 ring-white/10 bg-black/20 grid place-items-center"
+                  style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)' }}
+                >
+                  {a.icon ? (
+                    <div className="text-base leading-none" aria-hidden>
+                      {a.icon}
+                    </div>
+                  ) : (
+                    <div className="h-3 w-3 rounded-full" style={{ background: a.accent || 'var(--primary)' }} />
+                  )}
+                </div>
               </div>
+              <div className="mt-3 text-xs text-white/55">default {fmt(a.defaultMinutes)}</div>
               <div
-                className="h-9 w-9 rounded-2xl ring-1 ring-white/10 bg-black/20 grid place-items-center"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)' }}
-              >
-                <div className="h-3 w-3 rounded-full" style={{ background: a.accent || 'var(--primary)' }} />
-              </div>
-            </div>
-            <div className="mt-3 text-xs text-white/55">default {fmt(a.defaultMinutes)}</div>
-            <div
-              className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-20 blur-2xl"
-              style={{ background: a.accent || 'var(--primary)' }}
-            />
-          </button>
-        ))}
+                className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-20 blur-2xl"
+                style={{ background: a.accent || 'var(--primary)' }}
+              />
+            </button>
+          )
+        })}
       </div>
 
       {toast && (
@@ -153,7 +176,7 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
 
       <DurationSheet
         open={!!active}
-        title={active?.label || ''}
+        title={active ? (active.id === 'other' ? otherName : active.label) : ''}
         accent={active?.accent}
         minutes={minutes}
         setMinutes={setMinutes}
@@ -162,6 +185,9 @@ export function QuickLog({ activities }: { activities: QuickActivity[] }) {
         busy={busy}
         onClose={() => (busy ? null : setOpenId(null))}
         onLog={log}
+        isOther={active?.id === 'other'}
+        otherName={otherName}
+        setOtherName={setOtherName}
       />
 
       <div className="text-xs text-white/45">
@@ -182,6 +208,9 @@ function DurationSheet({
   busy,
   onClose,
   onLog,
+  isOther,
+  otherName,
+  setOtherName,
 }: {
   open: boolean
   title: string
@@ -193,6 +222,9 @@ function DurationSheet({
   busy: boolean
   onClose: () => void
   onLog: () => void
+  isOther?: boolean
+  otherName?: string
+  setOtherName?: (v: string) => void
 }) {
   useEffect(() => {
     if (!open) return
@@ -226,6 +258,20 @@ function DurationSheet({
               <div className="h-3 w-3 rounded-full" style={{ background: accent || 'var(--primary)' }} />
             </div>
           </div>
+
+          {isOther && (
+            <div className="mt-4">
+              <label className="grid gap-1">
+                <div className="text-xs text-white/60">Activity name</div>
+                <input
+                  value={otherName || ''}
+                  onChange={(e) => setOtherName?.(e.target.value)}
+                  placeholder="Name this activity"
+                  className="w-full rounded-xl border border-white/15 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-4 focus:ring-white/10"
+                />
+              </label>
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {PRESET_MINUTES.map((m) => (

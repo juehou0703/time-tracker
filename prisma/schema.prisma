@@ -47,3 +47,14 @@ model TimeEntry {
   @@index([endAt])
   @@index([activityId])
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  page      String
+  message   String
+  source    String   @default("web")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([page])
+}
