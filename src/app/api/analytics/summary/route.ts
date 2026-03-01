@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireApiKey } from '@/lib/auth'
+// Auth is handled by middleware (basic auth)
 import { startOfPeriod } from '@/lib/time'
 
 export async function GET(req: NextRequest) {
-  const auth = requireApiKey(req)
-  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
-
   const period = (req.nextUrl.searchParams.get('period') || 'week') as 'day' | 'week' | 'month' | 'quarter'
   const now = new Date()
   const start = startOfPeriod(now, period)
