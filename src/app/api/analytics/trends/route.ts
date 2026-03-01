@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-// Auth is handled by middleware (basic auth)
+import { requireApiKey } from '@/lib/auth'
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10)
 }
 
 export async function GET(req: NextRequest) {
+  const auth = requireApiKey(req)
+  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
+
   const days = Math.min(365, Math.max(7, Number(req.nextUrl.searchParams.get('days') || 30)))
   const end = new Date()
   const start = new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000)

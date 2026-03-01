@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
-// Auth is handled by middleware (basic auth)
+import { requireApiKey } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
+  const auth = requireApiKey(req)
+  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
+
   const start = req.nextUrl.searchParams.get('start')
   const end = req.nextUrl.searchParams.get('end')
 
@@ -22,6 +25,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = requireApiKey(req)
+  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
+
   const body = await req.json()
   const { startAt, endAt, activityName, categoryName, note, source } = body || {}
 
