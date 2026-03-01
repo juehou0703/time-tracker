@@ -64,7 +64,7 @@ const quick: QuickActivity[] = [
     label: 'Other',
     categoryName: 'Misc',
     activityName: 'Other',
-    icon: '➕',
+    icon: '✏️',
     accent: '#a78bfa',
     defaultMinutes: 25,
   },
