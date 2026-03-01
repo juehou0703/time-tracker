@@ -16,7 +16,7 @@ export function PieCard({ title, data }: { title: string; data: { name: string; 
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(v: number | string) => `${Number(v).toFixed(1)}%`} />
+            <Tooltip formatter={(v: number | string | undefined) => `${Number(v ?? 0).toFixed(1)}%`} />
           </PieChart>
         </ResponsiveContainer>
       </div>
