@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Button, Card, CardBody, CardHeader, Input } from '@/components/ui'
 
 export default function LogPage() {
   const [categoryName, setCategoryName] = useState('Projects')
@@ -14,7 +15,7 @@ export default function LogPage() {
     setMsg(null)
     const res = await fetch('/api/time-entries', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-api-key': 'hello' },
       body: JSON.stringify({
         categoryName,
         activityName,
@@ -24,7 +25,7 @@ export default function LogPage() {
         source: 'web',
       }),
     })
-    const json = await res.json()
+    const json = await res.json().catch(() => ({}))
     if (!res.ok) {
       setMsg(json?.error || 'Failed')
     } else {
@@ -34,48 +35,76 @@ export default function LogPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-8 space-y-6">
-      <h1 className="text-2xl font-bold">Log time</h1>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <div className="lg:col-span-3">
+        <Card>
+          <CardHeader title="Log time" subtitle="Create a time entry (web). WhatsApp logging is even faster." />
+          <CardBody>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label className="grid gap-1">
+                  <div className="text-xs text-white/60">Category</div>
+                  <Input value={categoryName} onChange={setCategoryName} placeholder="e.g. Meetings" />
+                </label>
+                <label className="grid gap-1">
+                  <div className="text-xs text-white/60">Activity</div>
+                  <Input value={activityName} onChange={setActivityName} placeholder="e.g. 1:1" />
+                </label>
+              </div>
 
-      <div className="grid gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
-        <label className="grid gap-1">
-          <span className="text-sm text-zinc-300">Category</span>
-          <input className="rounded-lg border border-white/15 bg-black/20 px-3 py-2" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
-        </label>
-        <label className="grid gap-1">
-          <span className="text-sm text-zinc-300">Activity</span>
-          <input className="rounded-lg border border-white/15 bg-black/20 px-3 py-2" value={activityName} onChange={(e) => setActivityName(e.target.value)} />
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <label className="grid gap-1">
-            <span className="text-sm text-zinc-300">Start</span>
-            <input type="datetime-local" className="rounded-lg border border-white/15 bg-black/20 px-3 py-2" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
-          </label>
-          <label className="grid gap-1">
-            <span className="text-sm text-zinc-300">End</span>
-            <input type="datetime-local" className="rounded-lg border border-white/15 bg-black/20 px-3 py-2" value={endAt} onChange={(e) => setEndAt(e.target.value)} />
-          </label>
-        </div>
-        <label className="grid gap-1">
-          <span className="text-sm text-zinc-300">Note</span>
-          <input className="rounded-lg border border-white/15 bg-black/20 px-3 py-2" value={note} onChange={(e) => setNote(e.target.value)} />
-        </label>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label className="grid gap-1">
+                  <div className="text-xs text-white/60">Start</div>
+                  <Input value={startAt} onChange={setStartAt} type="datetime-local" />
+                </label>
+                <label className="grid gap-1">
+                  <div className="text-xs text-white/60">End</div>
+                  <Input value={endAt} onChange={setEndAt} type="datetime-local" />
+                </label>
+              </div>
 
-        <button onClick={submit} className="rounded-lg border border-white/15 px-4 py-2 hover:bg-white/5">
-          Save
-        </button>
+              <label className="grid gap-1">
+                <div className="text-xs text-white/60">Note (optional)</div>
+                <Input value={note} onChange={setNote} placeholder="what was this block for?" />
+              </label>
 
-        {msg && <div className="text-sm text-zinc-300">{msg}</div>}
+              <div className="flex items-center gap-3">
+                <Button kind="primary" onClick={submit}>
+                  Save
+                </Button>
+                {msg && <div className="text-sm text-white/70">{msg}</div>}
+              </div>
+
+              <div className="mt-2 text-xs text-white/45">
+                (v0) This page currently uses a fixed api key <span className="font-mono">hello</span>. We’ll
+                swap that for a server-side proxy once the Judy WhatsApp bridge is wired.
+              </div>
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
-      <div className="text-sm text-zinc-400 space-y-1">
-        <div>WhatsApp command examples:</div>
-        <ul className="list-disc pl-5">
-          <li><code>log past hour as workout</code></li>
-          <li><code>log 30m dinner</code></li>
-          <li><code>help</code></li>
-        </ul>
+      <div className="lg:col-span-2">
+        <Card>
+          <CardHeader title="WhatsApp commands" subtitle="Message Judy (this WhatsApp) to log quickly." />
+          <CardBody>
+            <div className="space-y-3 text-sm text-white/75">
+              <Cmd>log past hour as workout</Cmd>
+              <Cmd>log 30m dinner</Cmd>
+              <Cmd>log 2h meetings</Cmd>
+              <Cmd>help</Cmd>
+            </div>
+          </CardBody>
+        </Card>
       </div>
-    </main>
+    </div>
+  )
+}
+
+function Cmd({ children }: { children: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 font-mono text-xs text-white/80">
+      {children}
+    </div>
   )
 }
