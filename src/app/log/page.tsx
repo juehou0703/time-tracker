@@ -1,85 +1,67 @@
 'use client'
 
-import { useState } from 'react'
-import { Button, Card, CardBody, CardHeader, Input } from '@/components/ui'
+import { Card, CardBody, CardHeader } from '@/components/ui'
+import { QuickLog, type QuickActivity } from '@/components/QuickLog'
+
+const quick: QuickActivity[] = [
+  {
+    id: 'workout',
+    label: 'Workout',
+    categoryName: 'Health',
+    activityName: 'Workout',
+    accent: '#ff7a18',
+    defaultMinutes: 60,
+  },
+  {
+    id: 'build-ai',
+    label: 'Build w/ AI',
+    categoryName: 'Projects',
+    activityName: 'Building with AI',
+    accent: '#7c5cff',
+    defaultMinutes: 45,
+  },
+  {
+    id: 'meetings',
+    label: 'Meetings',
+    categoryName: 'Meetings',
+    activityName: 'Meetings',
+    accent: '#22c55e',
+    defaultMinutes: 30,
+  },
+  {
+    id: 'coding',
+    label: 'Coding',
+    categoryName: 'Projects',
+    activityName: 'Coding',
+    accent: '#06b6d4',
+    defaultMinutes: 25,
+  },
+  {
+    id: 'deep-work',
+    label: 'Deep Work',
+    categoryName: 'Projects',
+    activityName: 'Deep Work',
+    accent: '#f97316',
+    defaultMinutes: 45,
+  },
+  {
+    id: 'admin',
+    label: 'Admin',
+    categoryName: 'Ops',
+    activityName: 'Admin',
+    accent: '#94a3b8',
+    defaultMinutes: 15,
+  },
+]
 
 export default function LogPage() {
-  const [categoryName, setCategoryName] = useState('Projects')
-  const [activityName, setActivityName] = useState('AI project')
-  const [startAt, setStartAt] = useState(() => new Date(Date.now() - 60 * 60 * 1000).toISOString().slice(0, 16))
-  const [endAt, setEndAt] = useState(() => new Date().toISOString().slice(0, 16))
-  const [note, setNote] = useState('')
-  const [msg, setMsg] = useState<string | null>(null)
-
-  const submit = async () => {
-    setMsg(null)
-    const res = await fetch('/api/time-entries', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': 'hello' },
-      body: JSON.stringify({
-        categoryName,
-        activityName,
-        startAt: new Date(startAt).toISOString(),
-        endAt: new Date(endAt).toISOString(),
-        note,
-        source: 'web',
-      }),
-    })
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) {
-      setMsg(json?.error || 'Failed')
-    } else {
-      setMsg('Logged.')
-      setNote('')
-    }
-  }
-
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
       <div className="lg:col-span-3">
         <Card>
-          <CardHeader title="Log time" subtitle="Create a time entry (web). WhatsApp logging is even faster." />
+          <CardHeader title="Quick Log" subtitle="Tap a button → pick duration → log. (5-minute increments)" />
           <CardBody>
-            <div className="grid gap-3">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <label className="grid gap-1">
-                  <div className="text-xs text-white/60">Category</div>
-                  <Input value={categoryName} onChange={setCategoryName} placeholder="e.g. Meetings" />
-                </label>
-                <label className="grid gap-1">
-                  <div className="text-xs text-white/60">Activity</div>
-                  <Input value={activityName} onChange={setActivityName} placeholder="e.g. 1:1" />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <label className="grid gap-1">
-                  <div className="text-xs text-white/60">Start</div>
-                  <Input value={startAt} onChange={setStartAt} type="datetime-local" />
-                </label>
-                <label className="grid gap-1">
-                  <div className="text-xs text-white/60">End</div>
-                  <Input value={endAt} onChange={setEndAt} type="datetime-local" />
-                </label>
-              </div>
-
-              <label className="grid gap-1">
-                <div className="text-xs text-white/60">Note (optional)</div>
-                <Input value={note} onChange={setNote} placeholder="what was this block for?" />
-              </label>
-
-              <div className="flex items-center gap-3">
-                <Button kind="primary" onClick={submit}>
-                  Save
-                </Button>
-                {msg && <div className="text-sm text-white/70">{msg}</div>}
-              </div>
-
-              <div className="mt-2 text-xs text-white/45">
-                (v0) This page currently uses a fixed api key <span className="font-mono">hello</span>. We’ll
-                swap that for a server-side proxy once the Judy WhatsApp bridge is wired.
-              </div>
-            </div>
+            <QuickLog activities={quick} />
           </CardBody>
         </Card>
       </div>
